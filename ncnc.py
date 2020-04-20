@@ -15,7 +15,7 @@ from gi.repository import WebKit2
 
 
 
-debug = False
+debug = True
 
 
 class Ncnc:
@@ -34,16 +34,21 @@ class Ncnc:
             print("there is no config file")
             self.on_pref(None, None)
 
-    def save_config(self, url, u, p):
+    def save_config(self, save_to_configfile, url, u, p):
         config = configparser.ConfigParser()
         config['nc'] = {'url': url,
                     'user': u,
                     'password': p}
-        self.configfile_fullpath = os.path.expanduser('~') + "/" + self.configfile
-        with open(self.configfile_fullpath, 'w') as cfg:
-            config.write(cfg)
-        self.load_config()
 
+        self.ncapiurl = config['nc']['url']
+        self.ncapiurl_full = self.ncapiurl + '/index.php/apps/news/api/v1-2'
+        self.ncuser = config['nc']['user']
+        self.nccred = HTTPBasicAuth(config['nc']['user'], config['nc']['password'])
+
+        if save_to_configfile:
+            self.configfile_fullpath = os.path.expanduser('~') + "/" + self.configfile
+            with open(self.configfile_fullpath, 'w') as cfg:
+                config.write(cfg)
 
     # ----------------------
     # convention:
@@ -392,8 +397,10 @@ class Ncnc:
 
         self.pref_dialog = pref_dial_builder.get_object("pdialog")
 
-        pref_ok_button = pref_dial_builder.get_object("prefok")
-        pref_ok_button.connect("clicked", self.on_pref_ok, "ok")
+        self.pref_ok_button = pref_dial_builder.get_object("prefok")
+        self.pref_ok_button.connect("clicked", self.on_pref_ok, "ok")
+
+        self.pref_savecfg_checkbox = pref_dial_builder.get_object("savecfg_checkbox")
 
         self.pref_url = pref_dial_builder.get_object("url_entry")
         self.pref_url.set_text(self.ncapiurl)
@@ -405,11 +412,15 @@ class Ncnc:
 
 
     def on_pref_ok(self, button, msg):
-        print("Pref OK", self.pref_url.get_text(), self.pref_usr.get_text(), self.pref_pswd.get_text())
-        self.save_config(self.pref_url.get_text(), self.pref_usr.get_text(), self.pref_pswd.get_text())
-        self.pref_dialog.destroy()
+        if debug:
+            print("Pref OK", self.pref_url.get_text(), self.pref_usr.get_text(), self.pref_pswd.get_text())
+        self.save_config(self.pref_savecfg_checkbox.get_active(),
+                         self.pref_url.get_text(),
+                         self.pref_usr.get_text(),
+                         self.pref_pswd.get_text())
 
-        self.on_sync(self, None, msg)
+        self.pref_dialog.destroy()
+        self.on_sync(None, msg)
 
 
     def on_about(self, action, param):
@@ -462,10 +473,10 @@ class Ncnc:
         self.configfile = ".ncnc.cfg"
         self.read_items = []
 
-        # self.ncapiurl = ''
-        # self.ncapiurl_full = ''
-        # self.ncuser = ''
-        # self.nccred = ''
+        self.ncapiurl = 'http://nextcloud.example.com/nextcloud'
+        self.ncapiurl_full = ''
+        self.ncuser = 'username'
+        self.nccred = ''
 
         self.folders_json_ncdata = {}
         self.folders_dict = {}  # folderid-fordername
