@@ -1,5 +1,5 @@
 # Nextcloud News Client
-Simple Nextcloud News client\
+Simple Nextcloud News client for GNOME\
 (one weekend project)\
 \
 It has 3 pane UI:\
